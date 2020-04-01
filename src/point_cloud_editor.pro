@@ -18,3 +18,9 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui
+
+DISTFILES += \
+    CMakeLists.txt
+
+RESOURCES += \
+    icons.qrc
