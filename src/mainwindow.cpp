@@ -1,12 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <vtkAutoInit.h>
-//VTK_MODULE_INIT(vtkRenderingOpenGL);
-//VTK_MODULE_INIT(vtkInteractionStyle);
-//VTK_MODULE_INIT(vtkRenderingFreeType);
-//VTK_MODULE_INIT(vtkRenderingVolumeOpenGL);
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -17,16 +11,10 @@ MainWindow::MainWindow(QWidget *parent) :
     selected_cloud.reset (new PointCloudT);
 
     // Set up the QVTK window
-    auto renderer = vtkSmartPointer <vtkRenderer>::New();
-    _renderWindow = vtkSmartPointer <vtkGenericOpenGLRenderWindow>::New();
-    _renderWindow->AddRenderer(renderer);
-//    auto style = vtkSmartPointer <pcl::visualization::PCLVisualizerInteractorStyle>::New();
-    viewer.reset(new pcl::visualization::PCLVisualizer(renderer, _renderWindow, "viewer", false));
-//    viewer->registerAreaPickingCallback (&MainWindow::pp_callback, *this);
-//    viewer->registerKeyboardCallback(&MainWindow::KeyDownCallback, *this);
-
-    ui->openGLWidget->SetRenderWindow(viewer->getRenderWindow());
-    ui->openGLWidget->update();
+    viewer.reset (new pcl::visualization::PCLVisualizer ("viewer", false));
+    ui->qvtkWidget->SetRenderWindow (viewer->getRenderWindow ());
+    viewer->setupInteractor (ui->qvtkWidget->GetInteractor (), ui->qvtkWidget->GetRenderWindow ());
+    ui->qvtkWidget->update ();
 
     // 初始化字段
     pointSize = ui->pointSize_spinBox->value();
@@ -57,8 +45,6 @@ MainWindow::~MainWindow()
  */
 void MainWindow::pp_callback(const pcl::visualization::AreaPickingEvent& event, void* args)
 {
-    qDebug() << "pp_callback is called." << endl;
-
     // 获取被框选的点的indices
     std::vector< int > indices;
     if (event.getPointsIndices(indices)==-1)
@@ -103,7 +89,7 @@ void MainWindow::pp_callback(const pcl::visualization::AreaPickingEvent& event, 
         }
         viewer->updatePointCloud<PointT>(clouds[cloudIndex], cloudColor, idList[cloudIndex]);
     }
-    _renderWindow->Render();
+    ui->qvtkWidget->update ();
 }
 
 /*
@@ -114,7 +100,6 @@ void MainWindow::KeyDownCallback(const pcl::visualization::KeyboardEvent& event,
     if (event.isCtrlPressed())
     {
         viewer->getInteractorStyle()->StartSelect();
-        qDebug() << "Ctrl is pressed" << endl;
     }
 
 }
@@ -146,18 +131,14 @@ void MainWindow::on_actionOpen_triggered()
 
     pcl::visualization::PointCloudColorHandlerCustom<PointT> cloudColor(cloud, initColor.red(), initColor.green(), initColor.blue());
 
+    viewer->registerAreaPickingCallback (&MainWindow::pp_callback, *this, (void*)&cloud);
+    viewer->registerKeyboardCallback(&MainWindow::KeyDownCallback, *this);
+    vtkSmartPointer<vtkRenderedAreaPicker> area_picker = vtkSmartPointer<vtkRenderedAreaPicker>::New();
+    viewer->getRenderWindow()->GetInteractor()->SetPicker(area_picker);
+
     viewer->addPointCloud<PointT> (cloud, cloudColor, cloudID);
-    //    viewer->registerAreaPickingCallback (&MainWindow::pp_callback, *this, (void*)&cloud);
-
-    //    viewer->registerKeyboardCallback(&MainWindow::KeyDownCallback, *this);
-
-//    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-//    renderWindowInteractor->SetPicker(area_picker);
-//    renderWindowInteractor->SetRenderWindow(_renderWindow);
-
     viewer->resetCamera ();
-    _renderWindow->Render();
-//    renderWindowInteractor->Start();
+    ui->qvtkWidget->update ();
 }
 
 /*
@@ -195,7 +176,7 @@ void MainWindow::on_pointSize_spinBox_valueChanged(int arg1)
     {
         viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, pointSize, idList[i]);
     }
-    _renderWindow->Render();
+    ui->qvtkWidget->update ();
 }
 
 void MainWindow::on_NewCategory_btn_clicked()
@@ -211,7 +192,7 @@ void MainWindow::on_clear_btn_clicked()
 {
     clouds[cloudIndex]->clear();
     viewer->removePointCloud (QString::number(cloudIndex).toUtf8().constData());
-    _renderWindow->Render();
+    ui->qvtkWidget->update ();
     haveAdded = false;
 }
 
@@ -219,5 +200,5 @@ void MainWindow::on_actionClearAll_triggered()
 {
     viewer->removeAllPointClouds ();
     viewer->resetCamera ();
-    _renderWindow->Render();
+    ui->qvtkWidget->update ();
 }

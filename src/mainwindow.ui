@@ -99,7 +99,7 @@
      </layout>
     </item>
     <item>
-     <widget class="QVTKOpenGLWidget" name="openGLWidget" native="true"/>
+     <widget class="QVTKWidget" name="qvtkWidget"/>
     </item>
    </layout>
   </widget>
@@ -164,10 +164,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QVTKOpenGLWidget</class>
+   <class>QVTKWidget</class>
    <extends>QWidget</extends>
-   <header location="global">QVTKOpenGLWidget.h</header>
-   <container>1</container>
+   <header>QVTKWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

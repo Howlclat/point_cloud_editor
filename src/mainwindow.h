@@ -48,7 +48,6 @@ public:
 
 protected:
     pcl::visualization::PCLVisualizer::Ptr viewer;
-    vtkSmartPointer <vtkGenericOpenGLRenderWindow> _renderWindow;
     PointCloudT::Ptr cloud;
     PointCloudT::Ptr selected_cloud;
     std::vector<PointCloudT::Ptr> clouds;
